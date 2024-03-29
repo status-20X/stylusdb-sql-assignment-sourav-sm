@@ -49,6 +49,7 @@ function parseQuery(query) {
     if (whereClause) {
         whereClauses = parseWhereClause(whereClause);
     }
+    
 
     return {
         fields: fields.split(',').map(field => field.trim()),
