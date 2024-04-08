@@ -19,7 +19,9 @@ test('Parse SQL Query', () => {
         whereClauses: [],
         joinCondition: null,
         joinTable: null,
-        joinType: null
+        joinType: null,
+        groupByFields : null,
+        hasAggregateWithoutGroupBy: false
     });
 });
 
@@ -47,9 +49,12 @@ test('Parse SQL Query with WHERE Clause', () => {
         }],
         joinCondition: null,
         joinTable: null,
-        joinType: null
+        joinType: null,
+        groupByFields : null,
+        hasAggregateWithoutGroupBy: false
     });
 });
+
 
 test('Execute SQL Query with WHERE Clause', async () => {
     const query = 'SELECT id, name FROM student WHERE age = 25';
@@ -77,7 +82,9 @@ test('Parse SQL Query with Multiple WHERE Clauses', () => {
         }],
         joinCondition: null,
         joinTable: null,
-        joinType: null
+        joinType: null,
+        groupByFields : null,
+        hasAggregateWithoutGroupBy: false
     });
 });
 
@@ -111,7 +118,9 @@ test('Parse SQL Query with INNER JOIN', async () => {
         whereClauses: [],
         joinTable: 'enrollment',
         joinCondition: { left: 'student.id', right: 'enrollment.student_id' },
-        joinType: null
+        joinType: 'INNER',
+        groupByFields : null,
+        hasAggregateWithoutGroupBy: false
     })
 });
 
@@ -124,8 +133,9 @@ test('Parse SQL Query with INNER JOIN and WHERE Clause', async () => {
         whereClauses: [{ field: 'student.age', operator: '>', value: '20' }],
         joinTable: 'enrollment',
         joinCondition: { left: 'student.id', right: 'enrollment.student_id' },
-        //joinType: 'INNER'
-        joinType: null
+        joinType: 'INNER',
+        groupByFields : null,
+        hasAggregateWithoutGroupBy: false
     })
 });
 
@@ -174,22 +184,21 @@ test('Execute SQL Query with INNER JOIN and a WHERE Clause', async () => {
 });
 
 test('Execute SQL Query with LEFT JOIN', async () => {
-    //const query = 'SELECT student.name, enrollment.course FROM student LEFT JOIN enrollment ON student.id=enrollment.student_id';
-    const query = 'SELECT student.name, enrollment.course FROM student LEFT JOIN enrollment ON student.id = enrollment.student_id';
+    const query = 'SELECT student.name, enrollment.course FROM student LEFT JOIN enrollment ON student.id=enrollment.student_id';
     const result = await executeSELECTQuery(query);
     expect(result).toEqual(expect.arrayContaining([
         expect.objectContaining({ "student.name": "Alice", "enrollment.course": null }),
-        expect.objectContaining({ "student.name": "John", "enrollment.course": "Mathematics" })
+        expect.objectContaining({ "student.name": "John", "enrollment.course": "Mathematics" }),
     ]));
     expect(result.length).toEqual(5); // 4 students, but John appears twice
 });
 
 test('Execute SQL Query with RIGHT JOIN', async () => {
-    const query = 'SELECT student.name, enrollment.course FROM student LEFT JOIN enrollment ON student.id=enrollment.student_id';
+    const query = 'SELECT student.name,enrollment.course FROM student RIGHT JOIN enrollment ON student.id=enrollment.student_id'
     const result = await executeSELECTQuery(query);
     expect(result).toEqual(expect.arrayContaining([
-        expect.objectContaining({ "student.name": "Alice", "enrollment.course": null }),
+        expect.objectContaining({ "student.name": null, "enrollment.course": "Biology" }),
         expect.objectContaining({ "student.name": "John", "enrollment.course": "Mathematics" })
     ]));
-    expect(result.length).toEqual(5); // 4 students, but John appears twice
+    expect(result.length).toEqual(5); // 4 courses, but Mathematics appears twice
 });

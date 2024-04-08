@@ -9,6 +9,9 @@
   },
   "scripts": {
     "test": "jest",
+    "test:82": "jest --testPathPattern=./tests/csvReader.test.js",
+    "test:83": "jest --testPathPattern=./tests/queryExecutor.test.js",
+    "test:84": "jest --testPathPattern=./tests/queryParser.test.js",
    "test:1": "jest --testPathPattern=./tests/step-01",
     "test:2": "jest --testPathPattern=./tests/step-02",
     "test:3": "jest --testPathPattern=./tests/step-03",

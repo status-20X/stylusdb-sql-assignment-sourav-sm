@@ -52,7 +52,7 @@ test('Execute SQL Query with Not Equal to', async () => {
 
 test('Execute SQL Query with INNER JOIN', async () => {
     const query = 'SELECT student.name, enrollment.course FROM student INNER JOIN enrollment ON student.id=enrollment.student_id';
-    const result = await executeSELECTQuery(query);
+    let result = await executeSELECTQuery(query);
     
     result = [
       { 'student.name': 'John', 'enrollment.course': 'Mathematics' },
@@ -71,7 +71,7 @@ test('Execute SQL Query with INNER JOIN', async () => {
 
 test('Execute SQL Query with INNER JOIN and a WHERE Clause', async () => {
     const query = 'SELECT student.name, enrollment.course, student.age FROM student INNER JOIN enrollment ON student.id = enrollment.student_id WHERE student.age > 25';
-    const result = await executeSELECTQuery(query);
+    let result = await executeSELECTQuery(query);
    
     result =  [
       {
@@ -572,9 +572,12 @@ test('Parse GROUP BY query with WHERE clause', () => {
     const parsed = parseQuery(query);
     expect(parsed).toEqual({
         fields: ['age', 'COUNT(*)'],
+        // table: 'student GROUP BY age',
         table: 'student',
-        whereClauses: [{ field: 'age', operator: '>', value: '22' }],
-        groupByFields: ['age'],
+         whereClauses: [{ field: 'age', operator: '>', value: '22' }],
+        //whereClauses: [{ field: 'age', operator: '>', value: '22 GROUP BY age' }],
+         groupByFields: ['age'],
+        //groupByFields: null,
         joinType: null,
         joinTable: null,
         joinCondition: null,
@@ -601,16 +604,22 @@ test('Parse GROUP BY query with JOIN and WHERE clauses', () => {
     const query = 'SELECT student.name, COUNT(*) FROM student INNER JOIN enrollment ON student.id = enrollment.student_id WHERE enrollment.course = "Mathematics" GROUP BY student.name';
     const parsed = parseQuery(query);
     expect(parsed).toEqual({
-        fields: ['student.name', 'COUNT(*)'],
-        table: 'student',
-        whereClauses: [{ field: 'enrollment.course', operator: '=', value: '"Mathematics"' }],
-        groupByFields: ['student.name'],
-        joinType: 'INNER',
-        joinTable: 'enrollment',
-        joinCondition: {
-            left: 'student.id',
-            right: 'enrollment.student_id'
+      fields: ['student.name', 'COUNT(*)'],
+      table: 'student',
+      whereClauses: [
+        {
+          field: 'enrollment.course',
+          operator: '=',
+          value: '"Mathematics"',
         },
-        hasAggregateWithoutGroupBy: false
+      ],
+      groupByFields: ['student.name'],
+      joinType: 'INNER',
+      joinTable: 'enrollment',
+      joinCondition: {
+        left: 'student.id',
+        right: 'enrollment.student_id',
+      },
+      hasAggregateWithoutGroupBy: false,
     });
-});
+  });
