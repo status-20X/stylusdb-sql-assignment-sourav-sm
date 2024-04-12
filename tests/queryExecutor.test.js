@@ -42,15 +42,15 @@ test('Execute SQL Query with Not Equal to', async () => {
 
 test('Execute SQL Query with INNER JOIN', async () => {
     const query = 'SELECT student.name, enrollment.course FROM student INNER JOIN enrollment ON student.id=enrollment.student_id';
-    let result = await executeSELECTQuery(query);
-    
+    const result = await executeSELECTQuery(query);
+    /*
     result = [
       { 'student.name': 'John', 'enrollment.course': 'Mathematics' },
       { 'student.name': 'John', 'enrollment.course': 'Physics' },
       { 'student.name': 'Jane', 'enrollment.course': 'Chemistry' },
       { 'student.name': 'Bob', 'enrollment.course': 'Mathematics' }
     ]
-   
+    */
     expect(result.length).toEqual(4);
     // toHaveProperty is not working here due to dot in the property name
     expect(result[0]).toEqual(expect.objectContaining({
@@ -61,8 +61,8 @@ test('Execute SQL Query with INNER JOIN', async () => {
 
 test('Execute SQL Query with INNER JOIN and a WHERE Clause', async () => {
     const query = 'SELECT student.name, enrollment.course, student.age FROM student INNER JOIN enrollment ON student.id = enrollment.student_id WHERE student.age > 25';
-    let result = await executeSELECTQuery(query);
-   
+    const result = await executeSELECTQuery(query);
+    /*
     result =  [
       {
         'student.name': 'John',
@@ -75,7 +75,7 @@ test('Execute SQL Query with INNER JOIN and a WHERE Clause', async () => {
         'student.age': '30'
       }
     ]
-    
+    */
     expect(result.length).toEqual(2);
     // toHaveProperty is not working here due to dot in the property name
     expect(result[0]).toEqual(expect.objectContaining({
@@ -244,5 +244,75 @@ test('Average age of students above a certain age', async () => {
     const result = await executeSELECTQuery(query);
     const expectedAverage = (25 + 30 + 24) / 3; // Average age of students older than 22
     expect(result).toEqual([{ 'AVG(age)': expectedAverage }]);
+});
+
+test('Execute SQL Query with ORDER BY', async () => {
+    const query = 'SELECT name FROM student ORDER BY name ASC';
+    const result = await executeSELECTQuery(query);
+
+    expect(result).toStrictEqual([
+        { name: 'Alice' },
+        { name: 'Bob' },
+        { name: 'Jane' },
+        { name: 'John' }
+    ]);
+});
+
+test('Execute SQL Query with ORDER BY and WHERE', async () => {
+    const query = 'SELECT name FROM student WHERE age > 24 ORDER BY name DESC';
+    const result = await executeSELECTQuery(query);
+
+    expect(result).toStrictEqual([
+        { name: 'John' },
+        { name: 'Jane' },
+    ]);
+});
+test('Execute SQL Query with ORDER BY and GROUP BY', async () => {
+    const query = 'SELECT COUNT(id) as count, age FROM student GROUP BY age ORDER BY age DESC';
+    const result = await executeSELECTQuery(query);
+
+    expect(result).toStrictEqual([
+        { age: '30', 'COUNT(id) as count': 1 },
+        { age: '25', 'COUNT(id) as count': 1 },
+        { age: '24', 'COUNT(id) as count': 1 },
+        { age: '22', 'COUNT(id) as count': 1 }
+    ]);
+});
+
+test('Execute SQL Query with standard LIMIT clause', async () => {
+    const query = 'SELECT id, name FROM student LIMIT 2';
+    const result = await executeSELECTQuery(query);
+    expect(result.length).toEqual(2);
+});
+
+test('Execute SQL Query with LIMIT clause equal to total rows', async () => {
+    const query = 'SELECT id, name FROM student LIMIT 4';
+    const result = await executeSELECTQuery(query);
+    expect(result.length).toEqual(4);
+});
+
+test('Execute SQL Query with LIMIT clause exceeding total rows', async () => {
+    const query = 'SELECT id, name FROM student LIMIT 10';
+    const result = await executeSELECTQuery(query);
+    expect(result.length).toEqual(4); // Total rows in student.csv
+});
+
+test('Execute SQL Query with LIMIT 0', async () => {
+    const query = 'SELECT id, name FROM student LIMIT 0';
+    const result = await executeSELECTQuery(query);
+    expect(result.length).toEqual(0);
+});
+
+test('Execute SQL Query with LIMIT and ORDER BY clause', async () => {
+    const query = 'SELECT id, name FROM student ORDER BY age DESC LIMIT 2';
+    const result = await executeSELECTQuery(query);
+    expect(result.length).toEqual(2);
+    expect(result[0].name).toEqual('John');
+    expect(result[1].name).toEqual('Jane');
+});
+
+test('Error Handling with Malformed Query', async () => {
+    const query = 'SELECT FROM table'; // intentionally malformed
+    await expect(executeSELECTQuery(query)).rejects.toThrow("Error executing query: Query parsing error: Invalid SELECT format");
 });
 
