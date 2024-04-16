@@ -1,4 +1,4 @@
-const executeSELECTQuery = require('../src/index');
+const {executeSELECTQuery} = require('../src/index');
 
 test('Execute SQL Query', async () => {
     const query = 'SELECT id, name FROM student';
@@ -316,3 +316,78 @@ test('Error Handling with Malformed Query', async () => {
     await expect(executeSELECTQuery(query)).rejects.toThrow("Error executing query: Query parsing error: Invalid SELECT format");
 });
 
+test('Basic DISTINCT Usage', async () => {
+    const query = 'SELECT DISTINCT age FROM student';
+    const result = await executeSELECTQuery(query);
+    expect(result).toEqual([{ age: '30' }, { age: '25' }, { age: '22' }, { age: '24' }]);
+});
+
+test('DISTINCT with Multiple Columns', async () => {
+    const query = 'SELECT DISTINCT student_id, course FROM enrollment';
+    const result = await executeSELECTQuery(query);
+    // Expecting unique combinations of student_id and course
+    expect(result).toEqual([
+        { student_id: '1', course: 'Mathematics' },
+        { student_id: '1', course: 'Physics' },
+        { student_id: '2', course: 'Chemistry' },
+        { student_id: '3', course: 'Mathematics' },
+        { student_id: '5', course: 'Biology' },
+    ]);
+});
+
+// Not a good test right now
+test('DISTINCT with WHERE Clause', async () => {
+    const query = 'SELECT DISTINCT course FROM enrollment WHERE student_id = "1"';
+    const result = await executeSELECTQuery(query);
+    // Expecting courses taken by student with ID 1
+    expect(result).toEqual([{ course: 'Mathematics' }, { course: 'Physics' }]);
+});
+
+test('DISTINCT with JOIN Operations', async () => {
+    const query = 'SELECT DISTINCT student.name FROM student INNER JOIN enrollment ON student.id = enrollment.student_id';
+    const result = await executeSELECTQuery(query);
+    // Expecting names of students who are enrolled in any course
+    expect(result).toEqual([{ "student.name": 'John' }, { "student.name": 'Jane' }, { "student.name": 'Bob' }]);
+});
+
+test('DISTINCT with ORDER BY and LIMIT', async () => {
+    const query = 'SELECT DISTINCT age FROM student ORDER BY age DESC LIMIT 2';
+    const result = await executeSELECTQuery(query);
+    // Expecting the two highest unique ages
+    expect(result).toEqual([{ age: '30' }, { age: '25' }]);
+});
+
+test('Execute SQL Query with LIKE Operator for Name', async () => {
+    const query = "SELECT name FROM student WHERE name LIKE '%Jane%'";
+    const result = await executeSELECTQuery(query);
+    // Expecting names containing 'Jane'
+    expect(result).toEqual([{ name: 'Jane' }]);
+});
+
+test('Execute SQL Query with LIKE Operator and Wildcards', async () => {
+    const query = "SELECT name FROM student WHERE name LIKE 'J%'";
+    const result = await executeSELECTQuery(query);
+    // Expecting names starting with 'J'
+    expect(result).toEqual([{ name: 'John' }, { name: 'Jane' }]);
+});
+
+test('Execute SQL Query with LIKE Operator Case Insensitive', async () => {
+    const query = "SELECT name FROM student WHERE name LIKE '%bob%'";
+    const result = await executeSELECTQuery(query);
+    // Expecting names 'Bob' (case insensitive)
+    expect(result).toEqual([{ name: 'Bob' }]);
+});
+
+test('Execute SQL Query with LIKE Operator and DISTINCT', async () => {
+    const query = "SELECT DISTINCT name FROM student WHERE name LIKE '%e%'";
+    const result = await executeSELECTQuery(query);
+    // Expecting unique names containing 'e'
+    expect(result).toEqual([{ name: 'Jane' }, { name: 'Alice' }]);
+});
+
+test('LIKE with ORDER BY and LIMIT', async () => {
+    const query = "SELECT name FROM student WHERE name LIKE '%a%' ORDER BY name ASC LIMIT 2";
+    const result = await executeSELECTQuery(query);
+    // Expecting the first two names alphabetically that contain 'a'
+    expect(result).toEqual([{ name: 'Alice' }, { name: 'Jane' }]);
+});
