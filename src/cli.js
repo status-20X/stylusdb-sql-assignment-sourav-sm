@@ -18,7 +18,18 @@ rl.on('line', async (line) => {
     }
 
     try {
-        // Execute the query - do your own implementation
+        if (line.toLowerCase().startsWith('select')) {
+            const result = await executeSELECTQuery(line);
+            console.log('Result:', result);
+        } else if (line.toLowerCase().startsWith('insert into')) {
+            const result = await executeINSERTQuery(line);
+            console.log(result.message);
+        } else if (line.toLowerCase().startsWith('delete from')) {
+            const result = await executeDELETEQuery(line);
+            console.log(result.message);
+        } else {
+            console.log('Unsupported command');
+        }
     }catch (error) {
         console.error('Error:', error.message);
     }
